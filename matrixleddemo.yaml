@@ -1,0 +1,150 @@
+substitutions:
+  devicename: smartlight1
+
+esphome:
+  name: $devicename
+  platform: ESP32
+  board: esp32dev
+  includes:
+    - my_matrixled_display.h
+
+wifi:
+  networks:
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+
+mqtt:
+  id: mqtt_client
+  broker: !secret mqtt_broker
+  username: !secret mqtt_user 
+  password: !secret mqtt_password
+
+logger:
+
+debug:
+
+ota:
+
+font:
+  - id: tinyfont
+    file: "DejaVuSans-Bold.ttf"
+    size: 9
+    glyphs: '♡Ωäöüß!"%()+,-_.:*=°~#0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz'
+
+time:
+  - platform: sntp
+    id: time
+
+light:
+  - platform: fastled_clockless
+    chipset: SK6812
+    pin: 27
+    num_leds: 64
+    rgb_order: GRB
+    name: "$devicename Light"
+    id: light
+    color_correct: [40%, 40%, 40%]
+    effects:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_flicker:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+
+      - addressable_lambda:
+              name: "My Simple Counter"
+              update_interval: 3000ms
+              lambda: |-
+                static int run = 0;
+                static auto matrixled = new MatrixLedDisplay();
+                matrixled->set_addr_light((light::AddressableLight *) &it);
+                matrixled->set_width(8);
+                matrixled->set_height(8);
+                matrixled->set_rotation(display::DISPLAY_ROTATION_270_DEGREES); 
+                matrixled->clear();
+                matrixled->printf(matrixled->get_width()/2, matrixled->get_height()/2,
+                                    id(tinyfont), COLOR_ON, TextAlign::CENTER,
+                                    "%i", run % 10);            
+                run++;
+
+   
+
+      - addressable_lambda:
+          name: "My Text Diplay"
+          update_interval: 800ms
+          lambda: |-
+            static auto text=" 3 2 1 0 #ESPHOME♡♡♡♡Ω      ";
+            static uint16_t byte_pos = 0;
+            char current_char[16]; 
+
+            static auto matrixled = new MatrixLedDisplay();
+            matrixled->set_addr_light((light::AddressableLight *) &it);
+            matrixled->set_width(8);
+            matrixled->set_height(8);
+            matrixled->set_rotation(display::DISPLAY_ROTATION_270_DEGREES); 
+          
+            //matrixled->set_fg_color(&current_color); 
+            matrixled->set_fg_color(new light::ESPColor(0xff, 0xff, 0xff)); 
+            matrixled->set_bg_color(new light::ESPColor(0x80, 0x00, 0x00)); 
+
+            matrixled->set_fg_color(new light::ESPColor((byte_pos * 10) % 255 , 0xff, 0xff)); 
+            matrixled->clear();
+            byte_pos = get_next_char(text, id(tinyfont), byte_pos, current_char, sizeof(current_char));
+
+            ESP_LOGD("main", "Displaying \"%s\"", current_char);             
+            matrixled->printf( matrixled->get_width()/2, 
+                 matrixled->get_height()/2, id(tinyfont), COLOR_ON, TextAlign::CENTER, current_char);          
+
+
+      - addressable_lambda:
+          name: "My Clock"
+          update_interval: 500ms
+          lambda: |-
+
+            static auto matrixled = new MatrixLedDisplay();
+            matrixled->set_addr_light((light::AddressableLight *) &it);
+            matrixled->set_width(8);
+            matrixled->set_height(8);
+            matrixled->set_rotation(display::DISPLAY_ROTATION_270_DEGREES); 
+          
+            matrixled->clear();
+
+            float halfheight = (matrixled->get_height() - 0.1) / 2;
+            float halfwidth = (matrixled->get_width() - 0.1) / 2;
+            float theta;
+
+            int minutes = -1;
+            int hours = -1;
+
+            if ((id(time).now()).is_valid()){
+                minutes = id(time).now().minute;
+                hours = id(time).now().hour;
+                
+                //fast forward...                
+                minutes = int(id(time).now().time * 20.) % 60;
+                hours = int(id(time).now().time * 20. / 60.) % 12;
+            };
+
+            matrixled->set_fg_color(new light::ESPColor(0x00, 0xff, 0x00)); 
+            for (int i=0; i < 12; i++){
+                theta = i * 2 * 3.141 / 12.0;
+                matrixled->draw_pixel_at(halfwidth + sin(theta) * halfwidth, halfheight + cos(theta) * halfheight, COLOR_ON);
+            }
+
+            if (minutes >= 0) {                
+                matrixled->set_fg_color(new light::ESPColor(0xff, 0xff, 0xff)); 
+                theta =  minutes * 2 * 3.141 / 60.0;
+                matrixled->line(halfwidth, halfheight, halfwidth + sin(-theta) * halfwidth, halfheight + cos(-theta) * halfheight, COLOR_ON);
+            }
+
+            if (hours >= 0) {  
+                matrixled->set_fg_color(new light::ESPColor(0xff, 0x00, 0x00)); 
+                theta = hours * 2 * 3.141 / 12.0;
+                matrixled->line(halfwidth, halfheight, halfwidth + sin(-theta) * halfwidth * 0.7, halfheight + cos(-theta) * halfheight  * 0.7, COLOR_ON);
+            }
+    
+ 
+display:
+
+
+
