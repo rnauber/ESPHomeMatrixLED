@@ -32,10 +32,9 @@ uint16_t get_next_char(const char *text, display::Font *font, uint16_t byte_pos,
 class   MatrixLedDisplay: public  display::DisplayBuffer
 {
 public:
-
     void set_addr_light(light::AddressableLight *lights ) { this->lights = lights; }
-    void set_fg_color(const light::ESPColor *fg_color) {this->fg_color = fg_color; }
-    void set_bg_color(const light::ESPColor *bg_color) {this->bg_color = bg_color; }
+    void set_fg_color(const light::ESPColor &fg_color) {this->fg_color = fg_color; }
+    void set_bg_color(const light::ESPColor &bg_color) {this->bg_color = bg_color; }
     void set_width(const uint8_t width) {this->width = width; }
     void set_height(const uint8_t height) {this->height = height; }
 
@@ -56,11 +55,9 @@ protected:
     }
 
   if (color) {
-    if (this->fg_color != NULL)
-        (*(this->lights))[pos] =  *this->fg_color;
+        (*(this->lights))[pos] =  this->fg_color;
   } else {
-    if (this->bg_color != NULL)
-        (*(this->lights))[pos] =  *this->bg_color;
+        (*(this->lights))[pos] =  this->bg_color;
     }
   }
 
@@ -80,7 +77,7 @@ protected:
   uint8_t width{8};
   uint8_t height{8};
   light::AddressableLight *lights;
-  const light::ESPColor *fg_color = new light::ESPColor(0xff, 0xff, 0xff);
-  const light::ESPColor *bg_color = new light::ESPColor(0x00, 0x00, 0x00);
+  light::ESPColor fg_color = light::ESPColor(0xff, 0xff, 0xff);
+  light::ESPColor bg_color = light::ESPColor(0x00, 0x00, 0x00);
 
 };
