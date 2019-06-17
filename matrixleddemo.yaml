@@ -33,7 +33,7 @@ font:
 
 time:
   - platform: sntp
-    id: time
+    id: rtc
 
 light:
   - platform: fastled_clockless
@@ -42,7 +42,7 @@ light:
     num_leds: 64
     rgb_order: GRB
     name: "$devicename Light"
-    id: light
+    id: mylight
     color_correct: [40%, 40%, 40%]
     effects:
       - addressable_random_twinkle:
@@ -116,13 +116,13 @@ light:
             int minutes = -1;
             int hours = -1;
 
-            if ((id(time).now()).is_valid()){
-                minutes = id(time).now().minute;
-                hours = id(time).now().hour;
+            if ((id(rtc).now()).is_valid()){
+                minutes = id(rtc).now().minute;
+                hours = id(rtc).now().hour;
                 
                 //fast forward...                
-                //minutes = int(id(time).now().time * 20.) % 60;
-                //hours = int(id(time).now().time * 20. / 60.) % 12;
+                //minutes = int(id(rtc).now().time * 20.) % 60;
+                //hours = int(id(rtc).now().time * 20. / 60.) % 12;
             };
 
             for (int i=0; i < 12; i++){
@@ -172,8 +172,8 @@ light:
  
             matrixled->clear();
             
-            if (((run % 32) == 0) && (id(time).now()).is_valid()){
-                id(time).now().strftime(text, sizeof(text), "%M %H:%M %H");
+            if (((run % 32) == 0) && (id(rtc).now()).is_valid()){
+                id(rtc).now().strftime(text, sizeof(text), "%M %H:%M %H");
                 id(tinyfont)->measure(text, &width, &x_offset, &baseline, &height); 	            charwidth = float(width) / strlen(text);
                 ESP_LOGD("main", "Displaying \"%s\"", text);
             };
