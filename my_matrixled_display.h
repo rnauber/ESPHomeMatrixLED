@@ -41,6 +41,26 @@ public:
   void set_width(const uint8_t width) { this->width = width; }
   void set_height(const uint8_t height) { this->height = height; }
 
+
+  void dump_buffer() {
+    ESP_LOGD("MatrixLedDisplay", "----- %4i x %4i -------",
+             this->get_width_internal(), get_height_internal());
+
+    for (int row = 0; row < this->get_height_internal(); row++) {
+      char text[this->get_width_internal() * 9 + 1];
+      for (int col = 0; col < this->get_width_internal(); col++) {
+        int pos = col + row * this->get_width_internal();
+
+        if ((pos < 0) || (pos > (this->width * this->height))) {
+          ESP_LOGD("MatrixLedDisplay", "Error at pos=%i", pos);
+          continue;
+        }
+        sprintf(&text[col*9], "%8x ", (*(this->lights))[pos].get().raw_32);
+      }
+      ESP_LOGD("MatrixLedDisplay", "%4i |%s|", row, text);
+    };
+  };
+
 protected:
   void draw_absolute_pixel_internal(int x, int y, int color) override {
     if (x >= this->get_width_internal() || x < 0 ||

@@ -7,6 +7,11 @@ esphome:
   board: esp32dev
   includes:
     - my_matrixled_display.h
+  on_boot:
+    priority: -10
+    then: # stop the flickering
+      - lambda: |-
+            fastled_base_fastledlightoutput->get_controller()->setDither(0);
 
 wifi:
   networks:
@@ -38,7 +43,7 @@ time:
 light:
   - platform: fastled_clockless
     chipset: SK6812
-    pin: 27
+    pin: GPIO26
     num_leds: 64
     rgb_order: GRB
     name: "$devicename Light"
@@ -93,8 +98,9 @@ light:
 
             ESP_LOGD("main", "Displaying \"%s\"", current_char);             
             matrixled->printf( matrixled->get_width()/2, 
-                 matrixled->get_height()/2, id(tinyfont), COLOR_ON, TextAlign::CENTER, current_char);          
-
+                 matrixled->get_height()/2, id(tinyfont), COLOR_ON, TextAlign::CENTER, current_char);    
+    
+            matrixled->dump_buffer();
 
       - addressable_lambda:
           name: "Clock"
