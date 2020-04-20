@@ -1,0 +1,120 @@
+substitutions:
+  devicename: m5atom_marquee
+  upper_devicename: M5Atom Marquee
+  mqtt_broker: homeassistant
+
+esphome:
+  name: $devicename
+  platform: ESP32
+  board: pico32
+  includes:
+    - my_matrixled_display.h
+  platformio_options:
+    upload_speed: 115200
+  on_boot:
+    then:
+      - light.turn_on:
+          id: led1
+          effect: "Scrolling Info"
+
+wifi:
+  networks:
+  - ssid: !secret wifi_ssid
+    password: !secret wifi_password
+
+logger:
+
+#api:
+
+ota:
+
+web_server:
+
+mqtt:
+  broker: ${mqtt_broker}
+  discovery: true
+
+text_sensor:
+  - platform: mqtt_subscribe
+    name: ${upper_devicename} Text
+    id: text1
+    topic: ${devicename}/text
+    
+font:
+  - id: tinyfont
+    file: "DejaVuSans.ttf"
+    size: 7
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO39
+      inverted: true
+    name: ${upper_devicename} Button
+
+sensor:
+  - platform: wifi_signal
+    name: ${upper_devicename} WiFi Signal
+  - platform: uptime
+    name: ${upper_devicename} Uptime
+
+switch:
+  - platform: restart
+    name: ${upper_devicename} Restart
+
+light:
+  - platform: neopixelbus
+    type: GRB
+    pin: GPIO27
+    num_leds: 25
+    name: ${upper_devicename} Led Matrix
+    id: led1
+    color_correct: [50%, 50%, 50%]
+    effects:
+      - addressable_rainbow:
+      - addressable_color_wipe:
+      - addressable_scan:
+      - addressable_twinkle:
+      - addressable_random_twinkle:
+      - addressable_fireworks:
+      - addressable_lambda:
+          name: "Scrolling Info"
+          update_interval: 100ms
+          lambda: |-
+            static char text[64] = "WAITING FOR DATA";
+            static uint16_t run = 0;
+            static int width;
+            static int fullwidth = 32;
+            static int x_offset;
+            static int baseline;
+            static int height;
+            static auto matrixled = new MatrixLedDisplay();
+            matrixled->set_addr_light((light::AddressableLight *) &it);
+            matrixled->set_width(5);
+            matrixled->set_height(5);
+
+            //matrixled->set_rotation(display::DISPLAY_ROTATION_270_DEGREES); 
+
+            matrixled->clear();
+            
+            if ((run % fullwidth) == 0){
+                if(id(text1).has_state())
+                  sprintf(text, "%s", id(text1).state.c_str());
+
+                id(tinyfont)->measure(text, &width, &x_offset, &baseline, &height);
+                fullwidth = width + 5;
+                
+                if(text[0] == '+')
+                  matrixled->set_fg_color(light::ESPColor(0, 255, 0, 0)); 
+                else if(text[0] == '-')
+                  matrixled->set_fg_color(light::ESPColor(255, 0, 0, 0));
+                else
+                  matrixled->set_fg_color(current_color);
+                
+                ESP_LOGD("main", "Displaying \"%s\"", text);
+                run = 0;
+            };
+            matrixled->printf(5 + width/2 - run % fullwidth, matrixled->get_height()/2, id(tinyfont), COLOR_ON, TextAlign::CENTER, text);
+            run++;
+
+display:
