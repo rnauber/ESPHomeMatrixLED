@@ -1,3 +1,7 @@
+# Example for some matrix led effects, especially a scrolling clock/mqtt text display
+# set the text via:
+#  mosquitto_pub -h mqtthost -t text/text -m "Hi there!"
+
 substitutions:
   devicename: leggedlamp
   matrixwidth: "8" # in pix
@@ -15,6 +19,11 @@ esphome:
     then: # stop the flickering
       - lambda: |-
             fastled_base_fastledlightoutput->get_controller()->setDither(0);
+      - light.turn_on:
+            id: mylight
+            brightness: 100%
+            effect: "Digital Clock and Text"
+        
 
 wifi:
   networks:
@@ -135,7 +144,7 @@ light:
             static auto scrolldisp = new MatrixLedScrollingDisplay();
 
             if (run == 0) { 
-              scrolldisp->set_size($matrixwidth * 10, $matrixheight);  
+              scrolldisp->set_size($matrixwidth * 10, $matrixheight);  // Set the maximum size of the scrollable area here!
             }
 
             if (run % 128 == 0) { // update clock
@@ -159,6 +168,7 @@ light:
                Color c = Color(255, 185, 105);
                scrolldisp->print(x_start, y_start, id(tinyfont), c, text); 
                
+               // Wrap the scrolling to the actual size of the text
                scrolldisp->get_text_bounds(x_start, y_start, text, id(tinyfont), 
                   TextAlign::TOP_LEFT, &x_start, &y_start, &width, &height); 
                       scrolldisp->set_wrapped_area(
