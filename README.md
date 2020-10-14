@@ -17,6 +17,9 @@ The scrolling clock and text display allows to set an arbitrary text via mqtt, f
 	mosquitto_pub -h mqtthost... -t text/text -m "Hi there!"
 ```
 
+Furthermore there is an example for the [ATOM Matrix ESP32 Development Kit](https://m5stack.com/collections/m5-atom/products/atom-matrix-esp32-development-kit) in [m5atom_marquee.yaml](m5atom_marquee.yaml).
+
+
 Have fun,
 [Richard](https://nauber.dev)
 
