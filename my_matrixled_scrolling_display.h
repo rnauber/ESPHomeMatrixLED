@@ -18,7 +18,7 @@ enum DisplayOrient {
   DISPLAY_ROTATION_270_DEGREES = 0x03,
   DISPLAY_FLIP_HORIZONTAL = 0x10,
   DISPLAY_FLIP_VERTICAL = 0x20,
-
+  DISPLAY_ZIGZAG = 0x40,
 };
 
 
@@ -245,9 +245,12 @@ public:
 
         if (rotation & DISPLAY_FLIP_VERTICAL)
           vp_y_rot = rows - vp_y_rot - 1;
-
+         
         int thisx = wrap(vp_x_rot + x, x0, x1);
         int thisy = wrap(vp_y_rot + y, y0, y1);
+
+        if ((rotation &  DISPLAY_ZIGZAG) &&  ((thisy & 0x01) == 0)) 
+        	thisx = this->get_width_internal() - thisx - 1;  
 
         int pos = thisx + thisy * this->get_width_internal();
 
