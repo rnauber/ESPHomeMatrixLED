@@ -33,8 +33,8 @@ wifi:
 mqtt:
   id: mqtt_client
   broker: !secret mqtt_broker
-  username: !secret mqtt_user 
-  password: !secret mqtt_password
+#  username: !secret mqtt_user 
+#  password: !secret mqtt_password
 
 
 text_sensor:
@@ -184,6 +184,35 @@ light:
                     |  DisplayOrient::DISPLAY_ROTATION_270_DEGREES)
                     );
              run++;
+             
+      - addressable_lambda:
+          name: "Rainbow Test"
+          update_interval: 10000ms
+          lambda: |-
+            static auto scrolldisp = new MatrixLedScrollingDisplay();
+
+            scrolldisp->set_size($matrixwidth, $matrixheight);  // Set the maximum size of the scrollable area here!
+            
+            for (int x=0; x < $matrixwidth; x++)
+                for (int y=0; y < $matrixheight; y++) {
+                
+                  ESPHSVColor hsv; 
+                  hsv.value = y * 255.0 / $matrixheight;
+                  hsv.saturation = 240;
+                  hsv.hue = x * 255.0 / $matrixwidth;
+  
+                  ESPColor espc = hsv.to_rgb();
+                
+                  Color c = Color(espc.r, espc.b, espc.g);
+                  scrolldisp->draw_pixel_at(x, y, c);
+                }
+
+            
+            scrolldisp->dump_buffer();   
+            scrolldisp->to_addressable_lights(
+                    (light::AddressableLight *) &it, $matrixwidth, $matrixheight, 0, 0,
+                    (DisplayOrient) ( DisplayOrient::DISPLAY_ROTATION_180_DEGREES | DisplayOrient::DISPLAY_ZIGZAG)
+            );
             
      
 display:
