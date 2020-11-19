@@ -89,7 +89,7 @@ light:
               matrixled->set_size($matrixwidth, $matrixheight);  
             }
 
-            matrixled->fill(Color(0x80, 0x0, 0x0));
+            matrixled->fill(Color(0.5, 0., 0.));
 
             float halfheight = ($matrixheight - 0.1) / 2;
             float halfwidth = ($matrixwidth - 0.1) / 2;
@@ -110,21 +110,21 @@ light:
             for (int i=0; i < 12; i++){
                 theta = i * 2 * 3.141 / 12.0;
                 if (i==0)
-                    c=Color(0x00, 0x00, 0xff);
+                    c=Color(0., 0., 0.);
                 else
-                    c=Color(0x00, 0xff, 0x00); 
+                    c=Color(0., 1.0, 0.); 
 
                 matrixled->draw_pixel_at(halfwidth - sin(-theta) * halfwidth, halfheight - cos(-theta) * halfheight, c);
             }
 
             if (minutes >= 0) {                
-                c=Color(0xff, 0xff, 0xff); 
+                c=Color(1.0, 1.0, 1.0); 
                 theta =  minutes * 2 * 3.141 / 60.0;
                 matrixled->line(halfwidth, halfheight, halfwidth - sin(-theta) * halfwidth, halfheight - cos(-theta) * halfheight, c);
             }
 
             if (hours >= 0) {  
-                c=Color(0xff, 0x00, 0x00); 
+                c=Color(1.0, 0, 0); 
                 theta = (hours + 0.5)/ 12.0 * 2 * 3.141 ;
                 matrixled->line(halfwidth, halfheight, halfwidth - sin(-theta) * halfwidth * 0.7, halfheight - cos(-theta) * halfheight  * 0.7, c);
             }
@@ -151,7 +151,7 @@ light:
                 char text[64] = "";  
                 char timetext[] = "??:¿¿ ";  
 
-                scrolldisp->fill(Color(0xff, 0x0, 0x0));
+                scrolldisp->fill(Color(1.0, 0., 0.));
 
                 if ((id(rtctime).now()).is_valid()){
                     id(rtctime).now().strftime(timetext, sizeof(timetext), "%H:%M ");
@@ -164,8 +164,9 @@ light:
                int x_start=0, y_start=-2;
                int width, height;
 
-               //Color c = Color(current_color.r,current_color.g, current_color.b, current_color.w);
-               Color c = Color(255, 185, 105);
+               auto c = Color();
+               c.raw_32 = current_color.raw_32;
+               
                scrolldisp->print(x_start, y_start, id(tinyfont), c, text); 
                
                // Wrap the scrolling to the actual size of the text
@@ -185,9 +186,10 @@ light:
                     );
              run++;
              
+            
       - addressable_lambda:
           name: "Rainbow Test"
-          update_interval: 10000ms
+          update_interval: 1000ms
           lambda: |-
             static auto scrolldisp = new MatrixLedScrollingDisplay();
 
@@ -197,23 +199,25 @@ light:
                 for (int y=0; y < $matrixheight; y++) {
                 
                   ESPHSVColor hsv; 
-                  hsv.value = y * 255.0 / $matrixheight;
+                  hsv.value = 255;
                   hsv.saturation = 240;
                   hsv.hue = x * 255.0 / $matrixwidth;
   
                   ESPColor espc = hsv.to_rgb();
                 
-                  Color c = Color(espc.r, espc.b, espc.g);
+                  Color c = Color();
+                  if ( y % 2 )
+                      c.raw_32 = espc.raw_32;
                   scrolldisp->draw_pixel_at(x, y, c);
                 }
-
             
             scrolldisp->dump_buffer();   
             scrolldisp->to_addressable_lights(
                     (light::AddressableLight *) &it, $matrixwidth, $matrixheight, 0, 0,
-                    (DisplayOrient) ( DisplayOrient::DISPLAY_ROTATION_180_DEGREES | DisplayOrient::DISPLAY_ZIGZAG)
+                    (DisplayOrient) (DisplayOrient::DISPLAY_FLIP_HORIZONTAL 
+                    |  DisplayOrient::DISPLAY_ROTATION_270_DEGREES)
             );
-            
+
      
 display:
 
