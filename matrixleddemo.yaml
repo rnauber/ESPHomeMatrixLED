@@ -3,27 +3,19 @@
 #  mosquitto_pub -h mqtthost -t text/text -m "Hi there!"
 
 substitutions:
-  devicename: leggedlamp
-  matrixwidth: "8" # in pix
-  matrixheight: "8" # in pix
-  scrollinterval: "0.2" # in seconds
+  devicename: leggedlamp  
+  xscrollpadding: "4" # in pix
+
   
 esphome:
   name: $devicename
   platform: ESP32
   board: esp32dev
-  includes:
-    - my_matrixled_scrolling_display.h
   on_boot:
     priority: -10
     then: # stop the flickering
       - lambda: |-
             fastled_base_fastledlightoutput->get_controller()->setDither(0);
-      - light.turn_on:
-            id: mylight
-            brightness: 100%
-            effect: "Digital Clock and Text"
-        
 
 wifi:
   networks:
@@ -69,157 +61,29 @@ light:
     name: "$devicename Light"
     id: mylight
     color_correct: [40%, 40%, 40%]
-    effects:
-      - addressable_random_twinkle:
-      - addressable_fireworks:
-      - addressable_flicker:
-      - addressable_rainbow:
-      - addressable_color_wipe:
-
-
-      - addressable_lambda:
-          name: "Clock"
-          update_interval: 500ms
-          lambda: |-
-            static uint16_t run = 0; 
-            static auto matrixled = new MatrixLedScrollingDisplay();
-            Color c;
-            
-            if (run == 0) { 
-              matrixled->set_size($matrixwidth, $matrixheight);  
-            }
-
-            matrixled->fill(Color(0.5, 0., 0.));
-
-            float halfheight = ($matrixheight - 0.1) / 2;
-            float halfwidth = ($matrixwidth - 0.1) / 2;
-            float theta;
-
-            int minutes = -1;
-            int hours = -1;
-
-            if ((id(rtctime).now()).is_valid()){
-                minutes = id(rtctime).now().minute;
-                hours = id(rtctime).now().hour;
-                
-                //fast forward...                
-                //minutes = int(id(rtctime).now().time * 20.) % 60;
-                //hours = int(id(rtctime).now().time * 20. / 60.) % 12;
-            };
-
-            for (int i=0; i < 12; i++){
-                theta = i * 2 * 3.141 / 12.0;
-                if (i==0)
-                    c=Color(0., 0., 0.);
-                else
-                    c=Color(0., 1.0, 0.); 
-
-                matrixled->draw_pixel_at(halfwidth - sin(-theta) * halfwidth, halfheight - cos(-theta) * halfheight, c);
-            }
-
-            if (minutes >= 0) {                
-                c=Color(1.0, 1.0, 1.0); 
-                theta =  minutes * 2 * 3.141 / 60.0;
-                matrixled->line(halfwidth, halfheight, halfwidth - sin(-theta) * halfwidth, halfheight - cos(-theta) * halfheight, c);
-            }
-
-            if (hours >= 0) {  
-                c=Color(1.0, 0, 0); 
-                theta = (hours + 0.5)/ 12.0 * 2 * 3.141 ;
-                matrixled->line(halfwidth, halfheight, halfwidth - sin(-theta) * halfwidth * 0.7, halfheight - cos(-theta) * halfheight  * 0.7, c);
-            }
-            
-            matrixled->to_addressable_lights(
-                    (light::AddressableLight *) &it, $matrixwidth, $matrixheight,
-                    0,0,
-                    (DisplayOrient) (DisplayOrient::DISPLAY_FLIP_HORIZONTAL 
-                    |  DisplayOrient::DISPLAY_ROTATION_270_DEGREES));
-    
- 
-      - addressable_lambda:
-          name: "Digital Clock and Text"
-          update_interval: 200ms
-          lambda: |-
-            static uint16_t run = 0; 
-            static auto scrolldisp = new MatrixLedScrollingDisplay();
-
-            if (run == 0) { 
-              scrolldisp->set_size($matrixwidth * 10, $matrixheight);  // Set the maximum size of the scrollable area here!
-            }
-
-            if (run % 128 == 0) { // update clock
-                char text[64] = "";  
-                char timetext[] = "??:¿¿ ";  
-
-                scrolldisp->fill(Color(1.0, 0., 0.));
-
-                if ((id(rtctime).now()).is_valid()){
-                    id(rtctime).now().strftime(timetext, sizeof(timetext), "%H:%M ");
-                    if (timetext[0] == '0')
-                        timetext[0] = ' ';
-               }
-               snprintf(&text[0], sizeof(text), "%s %s",
-               timetext, id(extratext).state.c_str());
-               
-               int x_start=0, y_start=-2;
-               int width, height;
-
-               auto c = Color();
-               c.raw_32 = current_color.raw_32;
-               
-               scrolldisp->print(x_start, y_start, id(tinyfont), c, text); 
-               
-               // Wrap the scrolling to the actual size of the text
-               scrolldisp->get_text_bounds(x_start, y_start, text, id(tinyfont), 
-                  TextAlign::TOP_LEFT, &x_start, &y_start, &width, &height); 
-                      scrolldisp->set_wrapped_area(
-                        0, 0,  
-                        width + 2, height + 1);
-                        
-               scrolldisp->dump_buffer();   
-            }
-            scrolldisp->to_addressable_lights(
-                    (light::AddressableLight *) &it, $matrixwidth, $matrixheight,
-                    run, 0,
-                    (DisplayOrient) (DisplayOrient::DISPLAY_FLIP_HORIZONTAL 
-                    |  DisplayOrient::DISPLAY_ROTATION_270_DEGREES)
-                    );
-             run++;
-             
-            
-      - addressable_lambda:
-          name: "Rainbow Test"
-          update_interval: 1000ms
-          lambda: |-
-            static auto scrolldisp = new MatrixLedScrollingDisplay();
-
-            scrolldisp->set_size($matrixwidth, $matrixheight);  // Set the maximum size of the scrollable area here!
-            
-            for (int x=0; x < $matrixwidth; x++)
-                for (int y=0; y < $matrixheight; y++) {
-                
-                  ESPHSVColor hsv; 
-                  hsv.value = 255;
-                  hsv.saturation = 240;
-                  hsv.hue = x * 255.0 / $matrixwidth;
-  
-                  ESPColor espc = hsv.to_rgb();
-                
-                  Color c = Color();
-                  if ( y % 2 )
-                      c.raw_32 = espc.raw_32;
-                  scrolldisp->draw_pixel_at(x, y, c);
-                }
-            
-            scrolldisp->dump_buffer();   
-            scrolldisp->to_addressable_lights(
-                    (light::AddressableLight *) &it, $matrixwidth, $matrixheight, 0, 0,
-                    (DisplayOrient) (DisplayOrient::DISPLAY_FLIP_HORIZONTAL 
-                    |  DisplayOrient::DISPLAY_ROTATION_270_DEGREES)
-            );
-
-     
+   
 display:
-
+  - platform: addressable_light
+    id: led_matrix_display
+    addressable_light_id: mylight
+    width: 8
+    height: 8
+    rotation: 270°
+    update_interval: 200ms
+    lambda: |-
+          static uint16_t xpos = 0;
+          const char * text = id(extratext).state.c_str();
+     
+          int x_start, y_start;
+          int width, height;
+              
+          it.get_text_bounds(0, 0, text, id(tinyfont), 
+              TextAlign::TOP_LEFT, &x_start, &y_start, &width, &height); 
+          
+          it.print(-(xpos % (width + $xscrollpadding)), -2, 
+            id(tinyfont), Color(0xFF1010), 
+            TextAlign::TOP_LEFT, text); 
+          xpos++;
+          
 
 
