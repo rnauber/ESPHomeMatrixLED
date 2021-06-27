@@ -69,6 +69,12 @@ display:
     width: 8
     height: 8
     rotation: 270°
+#    use a pixel mapper, if needed (cf. https://esphome.io/components/display/addressable_light.html) 
+#    pixel_mapper: |-
+#        if (x % 2 == 0) {
+#        return (x * 8) + y;
+#        }
+#        return (x * 8) + (7 - y);
     update_interval: 200ms
     lambda: |-
           static uint16_t xpos = 0;
