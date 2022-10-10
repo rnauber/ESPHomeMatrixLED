@@ -77,19 +77,36 @@ display:
 #        return (x * 8) + (7 - y);
     update_interval: 200ms
     lambda: |-
-          static uint16_t xpos = 0;
-          const char * text = id(extratext).state.c_str();
-     
+          static int16_t xpos = it.get_width();
+          const char * text = id(led_matrix_text).state.c_str();
+          
+          auto color = Color(0, 0, 255);
           int x_start, y_start;
           int width, height;
-              
-          it.get_text_bounds(0, 0, text, id(tinyfont), 
-              TextAlign::TOP_LEFT, &x_start, &y_start, &width, &height); 
           
-          it.print(-(xpos % (width + $xscrollpadding)), -2, 
-            id(tinyfont), Color(0xFF1010), 
-            TextAlign::TOP_LEFT, text); 
-          xpos++;
+          it.get_text_bounds(
+            0, 0, text, id(tinyfont), 
+            TextAlign::TOP_LEFT,
+            &x_start, &y_start, &width, &height
+          ); 
+          
+          if(xpos < -1 * (width + $xscrollpadding)) {
+            xpos = it.get_width();
+          }
+          
+          if(width <= it.get_width()) {
+            xpos = 0;
+          }
+          
+          it.print(
+            xpos,
+            2, 
+            id(tinyfont),
+            color, 
+            TextAlign::TOP_LEFT,
+            text
+          ); 
+          xpos--;
           
 
 
