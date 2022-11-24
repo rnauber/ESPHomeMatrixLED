@@ -85,11 +85,13 @@ display:
               
           it.get_text_bounds(0, 0, text, id(tinyfont), 
               TextAlign::TOP_LEFT, &x_start, &y_start, &width, &height); 
-          
+
           it.print(-(xpos % (width + $xscrollpadding)), -2, 
             id(tinyfont), Color(0xFF1010), 
             TextAlign::TOP_LEFT, text); 
-          xpos++;
           
-
+          if (width > it.get_width()) // only scroll if nesessary
+            xpos++;
+          else
+            xpos = 0;
 
