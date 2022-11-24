@@ -22,6 +22,15 @@ wifi:
     - ssid: !secret wifi_ssid
       password: !secret wifi_password
 
+
+# workaround for "wifi auth expired" 
+#https://community.home-assistant.io/t/esphome-wifi-auth-expired/443790/22
+i2c:
+  sda: 22
+  scl: 23
+  frequency: 200kHz
+
+  
 mqtt:
   id: mqtt_client
   broker: !secret mqtt_broker
