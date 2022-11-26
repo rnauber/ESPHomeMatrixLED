@@ -1,9 +1,5 @@
 # ESPHome LED Matrix Example 
 
-![Example of a text display on an 8x8 LED matrix.](text.gif)
-
-![A smallish analog clock on an 8x8 LED matrix.](clock.gif)
-
 ![A marquee digital clock.](marqueeclock.gif)
 
 <a href="https://esphome.io/"><img src="https://esphome.io/_images/logo-text.png" align="left" height="48" ></a>
